@@ -9,9 +9,9 @@
 
 # QAOps ToolBox
 
-DevOps tools examples focusing on automated testing.
+Examples of DevOps tools focusing on automated testing.
 
-1. [Ansible]()
-2. [Docker]()
-3. [Jenkins]()
-4. [Vagrant]()
+1. [Ansible](https://github.com/leoduprates/qaops-toolbox/tree/main/ansible)
+2. [Docker](https://github.com/leoduprates/qaops-toolbox/tree/main/docker)
+3. [Jenkins](https://github.com/leoduprates/qaops-toolbox/tree/main/jenkins)
+4. [Vagrant](https://github.com/leoduprates/qaops-toolbox/tree/main/vagrant)
