@@ -9,7 +9,7 @@
 
 # QAOps ToolBox
 
-DevOps tools examples focusing on automated testing.
+Examples of DevOps tools focusing on automated testing.
 
 1. [Ansible](https://github.com/leoduprates/qaops-toolbox/tree/main/ansible)
 2. [Docker](https://github.com/leoduprates/qaops-toolbox/tree/main/docker)
