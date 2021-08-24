@@ -1,0 +1,49 @@
+version: "3"
+services:
+  jenkins:
+    image: jenkins/jenkins
+    container_name: jenkins
+    environment:
+      JAVA_OPTS: "-Dhudson.model.DirectoryBrowserSupport.CSP=\"default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline';\""
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    links:
+      - selenium-hub
+
+  selenium-hub:
+    image: selenium/hub
+    ports:
+      - "4444:4444"
+
+  chrome:
+    image: selenium/node-chrome
+    depends_on:
+      - selenium-hub
+    environment:
+      HUB_PORT_4444_TCP_ADDR: selenium-hub
+      HUB_PORT_4444_TCP_PORT: 4444
+      NODE_MAX_SESSION: 1
+      NODE_MAX_INSTANCES: 1
+    volumes:
+      - /dev/shm:/dev/shm
+    ports:
+      - "9001:5900"
+    links:
+      - selenium-hub
+
+  firefox:
+    image: selenium/node-firefox
+    depends_on:
+      - selenium-hub
+    environment:
+      HUB_PORT_4444_TCP_ADDR: selenium-hub
+      HUB_PORT_4444_TCP_PORT: 4444
+      NODE_MAX_SESSION: 1
+      NODE_MAX_INSTANCES: 1
+    volumes:
+      - /dev/shm:/dev/shm
+    ports:
+      - "9002:5900"
+    links:
+      - selenium-hub

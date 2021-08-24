@@ -1,0 +1,57 @@
+---
+- name: Selenium Server
+  hosts: all
+  tasks:
+    - name: "Update Packages"
+      become: true
+      apt:
+        update_cache: yes
+        upgrade: full
+
+    - name: Install Unzip
+      become: true
+      apt:
+        name: unzip
+        state: latest
+
+    - name: Install Vim
+      become: true
+      apt:
+        name: vim
+        state: latest
+
+    - name: Install Java
+      become: true
+      apt:
+        name: default-jre
+        state: latest
+
+    - name: Install XVFB
+      become: true
+      apt:
+        name: xvfb
+        state: latest
+    
+    - name: Install Google Chrome
+      become: true
+      apt:
+        deb: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+
+    - name: Install Chromedriver
+      become: true
+      shell: |
+        CHROMEDRIVER_VERSION=$(curl "http://chromedriver.storage.googleapis.com/LATEST_RELEASE")
+        wget "http://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip"
+        unzip chromedriver_linux64.zip
+        sudo rm chromedriver_linux64.zip
+        chown vagrant:vagrant chromedriver
+
+    - name: Install Selenium Server
+      become: true
+      shell: |
+        SELENIUM_VERSION=$(curl "https://selenium-release.storage.googleapis.com/" | perl -n -e'/.*<Key>([^>]+selenium-server-standalone-2[^<]+)/ && print $1')
+        wget "https://selenium-release.storage.googleapis.com/${SELENIUM_VERSION}" -O selenium-server-standalone.jar
+        chown vagrant:vagrant selenium-server-standalone.jar
+
+    - name: Start Selenium Server
+      shell: xvfb-run -a nohup java -Dwebdriver.chrome.driver=chromedriver -jar selenium-server-standalone.jar -Dwebdriver.chrome.args="--headless" &

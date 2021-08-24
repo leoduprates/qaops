@@ -1,0 +1,31 @@
+Vagrant.configure("2") do |config|
+	config.vm.box = "ubuntu/bionic64"
+	config.vm.network :forwarded_port, guest:8080, host:8082
+
+	config.vm.provider "virtualbox" do |vm|
+		vm.memory = 8096
+		vm.cpus = 4
+	end
+
+	config.vm.provision "shell", inline: "mkdir -p /var/jenkins_home"
+	config.vm.provision "shell", inline: "chown -R 1000:1000 /var/jenkins_home/"
+
+	config.vm.provision "docker" do |docker|
+		docker.post_install_provision "shell", inline: "docker network create grid"
+	
+		docker.run "jenkins/jenkins:lts",
+			args: "-d -p '8080:8080' -e 'JAVA_OPTS=\"-Dhudson.model.DirectoryBrowserSupport.CSP=default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline';\"' -p '50000:50000' --net 'grid' -v '/var/jenkins_home:/var/jenkins_home' --name 'jenkins'"
+		  
+		docker.run "selenium/hub:4.0.0-alpha-7-prerelease-20201009",
+			args: "-d -p '4442-4444:4442-4444' --net 'grid' --name 'selenium-hub'"
+		  
+		docker.run "selenium/node-chrome:4.0.0-alpha-7-prerelease-20201009",
+			args: "-d --net 'grid' -e 'SE_EVENT_BUS_HOST=selenium-hub' -e 'SE_EVENT_BUS_PUBLISH_PORT=4442' -e 'SE_EVENT_BUS_SUBSCRIBE_PORT=4443' -v '/dev/shm:/dev/shm'"
+
+		docker.run "selenium/node-firefox:4.0.0-alpha-7-prerelease-20201009",
+			args: "-d --net 'grid' -e 'SE_EVENT_BUS_HOST=selenium-hub' -e 'SE_EVENT_BUS_PUBLISH_PORT=4442' -e 'SE_EVENT_BUS_SUBSCRIBE_PORT=4443' -v '/dev/shm:/dev/shm'"
+
+		docker.run "selenium/node-opera:4.0.0-alpha-7-prerelease-20201009",
+			args: "-d --net 'grid' -e 'SE_EVENT_BUS_HOST=selenium-hub' -e 'SE_EVENT_BUS_PUBLISH_PORT=4442' -e 'SE_EVENT_BUS_SUBSCRIBE_PORT=4443' -v '/dev/shm:/dev/shm'"
+	end
+end

@@ -1,0 +1,13 @@
+node {
+  stage('Copy Project') {
+    copyArtifacts (
+          projectName: 'cucumber-selenium-testing',
+          filter: '**'
+        );
+  }
+  stage('Test') {
+    nodejs(nodeJSInstallationName: 'nodejs') {
+      sh 'BROWSER=chrome SERVER=http://selenium-hub:4444/wd/hub npm test -- -t @regression'
+    }
+  }
+}

@@ -1,0 +1,32 @@
+selenium:
+  image: selenium/hub
+  ports:
+    - 4444:4444
+
+firefox:
+  image: selenium/node-firefox
+  ports:
+    - 4577
+  links:
+    - selenium:hub
+
+chrome:
+  image: selenium/node-chrome
+  ports:
+    - 4578
+  links:
+    - selenium:hub
+
+opera:
+  image: selenium/node-opera
+  ports:
+    - 4579
+  links:
+    - selenium:hub
+
+edge:
+  image: selenium/node-edge
+  ports:
+    - 4580
+  links:
+    - selenium:hub

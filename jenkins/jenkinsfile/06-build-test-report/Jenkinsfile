@@ -1,0 +1,55 @@
+node {
+  properties([
+    parameters([
+      choice(choices: ['chrome', 'firefox', 'edge', 'opera'],
+             description: 'Choose the web browser to the test execution.',
+             name: 'Browser'
+      ),
+      string(defaultValue: '@regression',
+             description: 'Choose the tags to parameterize the test execution.',
+             name: 'Tags',
+             trim: false
+      ),
+      string(defaultValue: 'http://selenium-hub:4444/wd/hub',
+             description: 'Selenium Hub URL',
+             name: 'Server',
+             trim: false
+      )
+    ])
+  ])
+  stage('Checkout') {
+    git branch: 'main', url: 'https://github.com/leoduprates/cucumber-selenium-testing'
+  }
+  stage('Build') {
+    nodejs(nodeJSInstallationName: 'nodejs') {
+      sh 'npm install'
+    }
+  }
+  stage('Test') {
+    nodejs(nodeJSInstallationName: 'nodejs') {
+      sh 'BROWSER=${Browser} SERVER=${Server} npm test -- -t ${Tags}'
+    }
+  }
+  stage('Report') {
+    nodejs(nodeJSInstallationName: 'nodejs') {
+      sh 'npm run report'
+    }
+    publishHTML (
+      target : [
+        allowMissing: false,
+        alwaysLinkToLastBuild: true,
+        keepAll: true,
+        reportDir: 'reports',
+        reportFiles: 'report.html',
+        reportName: 'Automation Test Report',
+        reportTitles: 'Automation Test Report'
+      ]
+    )
+  }
+  stage('Notify') {
+    slackSend (
+      color: '#403F4C',
+      message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n Automation Report at: ${env.BUILD_URL}Automation_20Test_20Report/"
+    );
+  }
+}

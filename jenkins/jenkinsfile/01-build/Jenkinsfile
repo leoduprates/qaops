@@ -1,0 +1,10 @@
+node {
+  stage('Checkout') {
+    git branch: 'main', url: 'https://github.com/leoduprates/cucumber-selenium-testing'
+  }
+  stage('Build') {
+    nodejs(nodeJSInstallationName: 'nodejs') {
+      sh 'npm install'
+    }
+  }
+}
