@@ -5,11 +5,21 @@
 
 # JFrog Artifactory
 
-JFrog’s Artifactory open source (Artifactory OSS) project was created to manage binary artifacts for Maven, Gradle, Ivy and SBT as well as generic packages in the open source version.
+JFrog’s Artifactory OOS (open-source software) manages binary artifacts.
 
-This document describes instructions for starting a JFrog Artifactory container and publishing a package using Gradle.
+Community version supported repositories:
+
+- Generic
+- Gradle
+- Ivy
+- Maven
+- sbt
 
 ## Getting Started
+
+This document describes instructions for starting a # JFrog Artifactory by container and publishing and consuming a dependency using Gradle.
+
+### Start JFrog
 
 1\. Run Docker Compose to up the JFrog’s container.
 
@@ -23,18 +33,12 @@ $ docker-compose up
 $ docker run --name artifactory -d -p 8081:8081 -p 8082:8082 docker.bintray.io/jfrog/artifactory-oss:latest
 ```
 
-3\. Open the project gradle-example in your IDE (in my case the Intellij).
-
-```shell
-$ cd gradle-example
-```
-
 4\. Login in JFrog and create a repository:
 
     a. Click on the "Repositories" button.
     b. Click on the "Add Repositories" > "Local Repository".
     c. Choose "Gradle" option.
-    d. Fill "libs-snapshot-local" in the "Respository Key" field.
+    d. Fill "libs-release" in the "Respository Key" field.
     e. Click on the "Save & Finish" to create the repository.
 
 **Note**: The default JFrog’s Artifactory username and password is:
@@ -42,6 +46,73 @@ $ cd gradle-example
     • admin
     • password
 
+### Publish Dependency
+
+1\. Open the project publisher-project in your IDE (in my case the Intellij).
+
+```shell
+$ cd publisher-project
+```
+
+2\. Create a gradle.properties file with the information below.
+
+```groovy
+currentVersion=1.0-SNAPSHOT
+artifactory_url=http://localhost:8082
+artifactory_user=admin
+artifactory_password=password
+```
+
+3\. In the build.gradle file, add the maven-publish and com.jfrog.artifactory in plugins.
+
+```groovy
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '4.+')
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.artifactory'
+```
+
+4\. In the build.gradle file, add the publish task.
+
+```groovy
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+artifactory {
+    contextUrl = "${artifactory_url}/artifactory"
+    publish {
+        repository {
+            repoKey = 'libs-release' // The Artifactory repository key to publish to
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+        }
+        defaults {
+            publications('mavenJava')
+            publishArtifacts = true
+            publishPom = true
+        }
+    }
+}
+```
 
 5\. Publish the artifact using Gradle.
 
@@ -50,7 +121,59 @@ $ ./gradlew artifactoryPublish
 
 > Task :artifactoryDeploy
 Deploying build info...
-Build-info successfully deployed. Browse it in Artifactory under http://[localhost]:[port]/artifactory/webapp/builds/gradle-example/[id]
+Build-info successfully deployed. Browse it in Artifactory under http://[localhost]:[port]/artifactory/webapp/builds/publisher-project/[id]
+
+BUILD SUCCESSFUL
+```
+
+### Consume Dependency
+
+1\. Open the project consumer-project in your IDE (in my case the Intellij).
+
+```shell
+$ cd consumer-project
+```
+
+2\. Create a gradle.properties file with the information below.
+
+```groovy
+artifactory_url=http://localhost:8082
+artifactory_user=admin
+artifactory_password=password
+```
+
+3\. In the build.gradle file, add your repository.
+
+```groovy
+repositories {
+    mavenCentral()
+    maven {
+        url "${artifactory_url}/artifactory/libs-release"
+        allowInsecureProtocol true
+        credentials {
+            username "${artifactory_user}"
+            password "${artifactory_password}"
+        }
+    }
+}
+```
+
+4\. In the build.gradle file, add the dependency.
+
+```groovy
+dependencies {
+    implementation 'org.example:publisher-project:1.0-SNAPSHOT'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+}
+```
+
+5\. Update the project
+
+```shell
+$ ./gradlew clean build
+
+> Task :build
 
 BUILD SUCCESSFUL
 ```

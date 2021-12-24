@@ -1,0 +1,41 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+group 'org.example'
+version currentVersion
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifact("build/libs/publisher-project-${version}"+".jar") {
+                extension 'jar'
+            }
+        }
+    }
+    repositories {
+        maven {
+            name 'nexus'
+            url "${artifactory_url}/repository/maven-snapshots/"
+            allowInsecureProtocol true
+            credentials {
+                username "${artifactory_user}"
+                password "${artifactory_password}"
+            }
+        }
+    }
+}
